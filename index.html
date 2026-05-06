@@ -119,29 +119,70 @@ button:hover{
 </div>
 
 <script>
-async function publicarAgora(){
-    document.getElementById("status").innerHTML = "Enviando dados para o GitHub...";
+	const GITHUB_TOKEN = "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";
+	const REPO = "SEUUSUARIO/automa";
 
-    const cliente = document.getElementById("cliente").value;
-    const legenda = document.getElementById("legenda").value;
-    const midia = document.getElementById("midia").files[0];
+	async function publicarAgora(){
+ 	   document.getElementById("status").innerHTML = "Preparando envio...";
 
-    if(!midia){
-        document.getElementById("status").innerHTML = "Selecione uma mídia antes de publicar.";
-        return;
-    }
+    	const cliente = document.getElementById("cliente").value;
+    	const legenda = document.getElementById("legenda").value;
+    	const midia = document.getElementById("midia").files[0];
 
-    const payload = {
-        cliente: cliente,
-        legenda: legenda,
-        arquivo: midia.name,
-        data: new Date().toISOString()
-    };
+    	if(!midia){
+        	document.getElementById("status").innerHTML = "Selecione uma mídia.";
+        	return;
+    	}
 
-    console.log(payload);
+    	const reader = new FileReader();
 
-    document.getElementById("status").innerHTML = "Postagem preparada. Próxima etapa: conectar com GitHub API.";
-}
+    	reader.onload = async function(){
+        	const base64File = reader.result.split(',')[1];
+
+	        const nomeArquivo = Date.now() + "_" + midia.name;
+
+	        // UPLOAD DA MIDIA
+        	await fetch(`https://api.github.com/repos/${REPO}/contents/data/midias/${nomeArquivo}`,{
+            	method:"PUT",
+            	headers:{
+                	"Authorization":"token " + GITHUB_TOKEN,
+                	"Content-Type":"application/json"
+            	},
+            	body:JSON.stringify({
+                	message:"upload midia",
+                	content:base64File
+            	})
+        	});
+
+        	// CRIAR JSON DA POSTAGEM
+	        const postagem = {
+            	cliente:cliente,
+            	legenda:legenda,
+            	arquivo:nomeArquivo,
+            	data:new Date().toISOString(),
+            	status:"pendente"
+        	};
+
+	        const jsonBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(postagem,null,2))));
+        	const nomeJson = Date.now() + ".json";
+
+	        await fetch(`https://api.github.com/repos/${REPO}/contents/data/posts/${nomeJson}`,{
+        	    method:"PUT",
+            	headers:{
+                	"Authorization":"token " + GITHUB_TOKEN,
+                	"Content-Type":"application/json"
+            	},
+            	body:JSON.stringify({
+                	message:"nova postagem",
+                	content:jsonBase64
+           	 })
+        	});
+
+	        document.getElementById("status").innerHTML = "Dados enviados ao GitHub com sucesso!";
+    	}
+
+	    reader.readAsDataURL(midia);
+	}
 </script>
 
 </body>
