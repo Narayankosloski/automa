@@ -20,7 +20,7 @@ export default async function handler(req, res){
         try{
 
             if(err){
-                console.log(err);
+                console.log("ERRO FORM:", err);
                 return res.status(500).send("Erro ao processar formulário");
             }
 
@@ -42,11 +42,12 @@ export default async function handler(req, res){
             const nomeArquivo = Date.now() + "_" + arquivo.originalFilename;
 
             const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-            const REPO = "SEUUSUARIO/automa";
+            const REPO = "Narayankosloski/automa";
 
-            // ==========================
-            // SALVAR MIDIA
-            // ==========================
+            // ==============================
+            // ENVIAR MIDIA PARA GITHUB
+            // ==============================
+
             const uploadMidia = await fetch(`https://api.github.com/repos/${REPO}/contents/data/midias/${nomeArquivo}`,{
                 method:"PUT",
                 headers:{
@@ -62,13 +63,14 @@ export default async function handler(req, res){
             const retornoMidia = await uploadMidia.json();
 
             if(!uploadMidia.ok){
-                console.log(retornoMidia);
-                return res.status(500).send("Falha upload mídia GitHub");
+                console.log("ERRO GITHUB MIDIA:", retornoMidia);
+                return res.status(500).send(JSON.stringify(retornoMidia));
             }
 
-            // ==========================
-            // CRIAR JSON AGENDAMENTO
-            // ==========================
+            // ==============================
+            // CRIAR JSON DO AGENDAMENTO
+            // ==============================
+
             const story = {
                 cliente: cliente,
                 usuario: usuario,
@@ -97,15 +99,15 @@ export default async function handler(req, res){
             const retornoJson = await uploadJson.json();
 
             if(!uploadJson.ok){
-                console.log(retornoJson);
-                return res.status(500).send("Falha salvar agendamento");
+                console.log("ERRO GITHUB JSON:", retornoJson);
+                return res.status(500).send(JSON.stringify(retornoJson));
             }
 
             return res.status(200).send("Story agendado com sucesso.");
 
         }catch(e){
-            console.log(e);
-            return res.status(500).send("Erro interno no servidor");
+            console.log("ERRO INTERNO:", e);
+            return res.status(500).send("Erro interno servidor");
         }
 
     });
