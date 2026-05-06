@@ -1,0 +1,23 @@
+name: Postar Story
+
+on:
+  workflow_dispatch:
+
+jobs:
+  postar:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v3
+
+      - name: Instalar Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Instalar dependências
+        run: npm install playwright fs-extra node-fetch
+
+      - name: Rodar bot
+        run: node bot/postar-instagram.js

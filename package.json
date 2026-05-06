@@ -1,5 +1,10 @@
 {
+  "name": "automa",
+  "version": "1.0.0",
+  "type": "module",
   "dependencies": {
-    "formidable": "^3.5.1"
+    "formidable": "^3.5.1",
+    "node-fetch": "^3.3.2",
+    "playwright": "^1.46.0"
   }
 }
