@@ -1,23 +1,25 @@
 name: Postar Story
 
 on:
+  schedule:
+    - cron: "* * * * *"
   workflow_dispatch:
 
 jobs:
-  postar:
+  bot:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Baixar código
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Instalar Node
-        uses: actions/setup-node@v3
+      - uses: actions/setup-node@v3
         with:
           node-version: 18
 
-      - name: Instalar dependências
-        run: npm install playwright fs-extra node-fetch
+      - run: npm install
 
-      - name: Rodar bot
-        run: node bot/postar-instagram.js
+      - run: npx playwright install
+
+      - run: node bot/postar-instagram.js
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}

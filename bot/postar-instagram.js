@@ -1,32 +1,37 @@
-import { chromium } from 'playwright';
-import fs from 'fs';
-import fetch from 'node-fetch';
+import { chromium } from "playwright";
+import fetch from "node-fetch";
+import fs from "fs";
 
 const REPO = "Narayankosloski/automa";
 const TOKEN = process.env.GITHUB_TOKEN;
 
-async function pegarStories(){
+async function pegarFila(){
+
     const res = await fetch(`https://api.github.com/repos/${REPO}/contents/data/stories`,{
-        headers:{ Authorization:`token ${TOKEN}` }
+        headers:{
+            Authorization:`token ${TOKEN}`
+        }
     });
 
     return await res.json();
 }
 
-async function baixarArquivo(path){
-    const res = await fetch(`https://raw.githubusercontent.com/${REPO}/main/${path}`);
+async function baixarImagem(url){
+
+    const res = await fetch(url);
     const buffer = await res.arrayBuffer();
-    fs.writeFileSync("midia", Buffer.from(buffer));
+
+    fs.writeFileSync("story.jpg", Buffer.from(buffer));
 }
 
-async function postar(usuario, senha){
+async function postarInstagram(usuario, senha){
 
     const browser = await chromium.launch({ headless:true });
     const page = await browser.newPage();
 
     await page.goto("https://www.instagram.com/accounts/login/");
 
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(5000);
 
     await page.fill('input[name="username"]', usuario);
     await page.fill('input[name="password"]', senha);
@@ -37,37 +42,43 @@ async function postar(usuario, senha){
 
     console.log("Login feito");
 
-    // ⚠️ Aqui entraria a lógica de postar story
-    // Instagram muda muito, então isso é base inicial
+    // abrir upload story (interface muda com frequência)
+    await page.goto("https://www.instagram.com/");
+
+    await page.waitForTimeout(5000);
+
+    // aqui é onde o Instagram pode variar UI
+    // por isso deixamos base funcional
+
+    console.log("Pronto para upload (etapa final depende da UI)");
 
     await browser.close();
 }
 
 async function main(){
 
-    const lista = await pegarStories();
+    const arquivos = await pegarFila();
 
-    for(const item of lista){
+    for(const file of arquivos){
 
-        if(!item.name.endsWith(".json")) continue;
+        if(!file.name.endsWith(".json")) continue;
 
-        const conteudo = await fetch(item.download_url);
-        const json = await conteudo.json();
-
-        if(json.status !== "pendente") continue;
+        const data = await fetch(file.download_url);
+        const json = await data.json();
 
         const agora = new Date();
         const agendar = new Date(json.agendar);
 
-        if(agora >= agendar){
+        if(json.status === "pendente" && agora >= agendar){
 
-            console.log("Postando:", json.cliente);
+            console.log("🚀 Postando story:", json.cliente);
 
-            await baixarArquivo(`data/midias/${json.arquivo}`);
+            await baixarImagem(`https://raw.githubusercontent.com/${REPO}/main/data/midias/${json.arquivo}`);
 
-            await postar(json.usuario, json.senha);
+            await postarInstagram(json.usuario, json.senha);
 
-            // aqui depois atualizamos status
+            console.log("✔ Executado (precisa finalizar UI do story)");
+
         }
     }
 }
